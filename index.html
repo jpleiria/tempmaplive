@@ -191,48 +191,44 @@
             timeLeft = ROTATION_TIME;
         }
 
-        // 2. Nova função applyMask para carregar o ficheiro local
-    async function applyMask() {
-        try {
-            // Faz a leitura do ficheiro local
-            const response = await fetch('limite.geojson');
-            const data = await response.json();
+        async function applyMask() {
+    try {
+        // 1. Procura o ficheiro na mesma pasta
+        const response = await fetch('limite.geojson');
+        if (!response.ok) throw new Error("Ficheiro não encontrado");
+        const data = await response.json();
 
-            // O Leaflet permite adicionar o GeoJSON diretamente
-            const feature = data.features[0]; 
-            
-            if (feature) {
-                const world = [[90, -180], [90, 180], [-90, 180], [-90, -180]];
-                
-                // Converte as coordenadas do GeoJSON (Lon, Lat) para o Leaflet (Lat, Lon)
-                // O método L.GeoJSON.coordsToLatLngs facilita esta inversão
-                const hole = L.GeoJSON.coordsToLatLngs(feature.geometry.coordinates, feature.geometry.type === "MultiPolygon" ? 2 : 1);
+        const world = [[90, -180], [90, 180], [-90, 180], [-90, -180]];
+        
+        // 2. Extrai geometria (ajustado para o seu ficheiro que é um Polygon)
+        const feature = data.features[0];
+        const coordinates = feature.geometry.coordinates;
 
-                // Aplica a máscara escura (invertida)
-                L.polygon([world, hole], { 
-                    color: 'transparent', 
-                    fillColor: '#09090b', 
-                    fillOpacity: 0.8,
-                    interactive: false 
-                }).addTo(map);
+        // Inverte Lon/Lat para Lat/Lon (o Leaflet precisa disto)
+        // Nota: Se o ficheiro ainda estiver em EPSG:3763, isto continuará a não aparecer no sítio certo
+        const hole = L.GeoJSON.coordsToLatLngs(coordinates, 1);
 
-                // Desenha a linha de contorno azul original
-                L.geoJSON(data, { 
-                    style: { 
-                        color: "#3b82f6", 
-                        weight: 2, 
-                        fill: false,
-                        interactive: false 
-                    } 
-                }).addTo(map);
-                
-                // Ajusta automaticamente o zoom para os limites do ficheiro
-                map.fitBounds(L.geoJSON(data).getBounds());
-            }
-        } catch (e) {
-            console.error("Erro ao carregar o ficheiro GeoJSON local:", e);
-        }
+        // 3. Aplica a máscara escura
+        L.polygon([world, hole], { 
+            color: 'transparent', 
+            fillColor: '#09090b', 
+            fillOpacity: 0.8,
+            interactive: false 
+        }).addTo(map);
+
+        // 4. Desenha o contorno azul original
+        L.geoJSON(data, { 
+            style: { color: "#3b82f6", weight: 2, fill: false, interactive: false } 
+        }).addTo(map);
+
+        // Ajusta o zoom ao concelho
+        const bounds = L.geoJSON(data).getBounds();
+        map.fitBounds(bounds);
+
+    } catch (e) {
+        console.error("Erro ao carregar o limite local:", e);
     }
+}
 
         function addFireStations() {
             const cbs = [
