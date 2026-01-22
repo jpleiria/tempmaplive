@@ -372,29 +372,54 @@ async function addFreguesias() {
 
         L.geoJSON(data, {
             style: function(feature) {
-                // Avança na paleta para evitar cores parecidas em vizinhos
+                // Alterna cores para evitar vizinhos iguais
                 const color = neonPalette[colorIndex % neonPalette.length];
                 colorIndex += 2; 
 
                 return {
-                    // LINHA DE LIMITE (Igual para todas e bem translúcida)
                     stroke: true,
-                    color: "#ffffff",   // Linha branca/clara para neutralidade
-                    weight: 1,          // Linha fina
-                    opacity: 0.2,       // Muito transparente para não poluir
-
-                    // PREENCHIMENTO (Cores frias saltadas)
+                    color: "#ffffff",   // Linha de limite branca
+                    weight: 1,          
+                    opacity: 0.15,      // Limite muito suave
                     fillColor: color,
-                    fillOpacity: 0.12,  // Mantém as estradas bem visíveis
-                    
+                    fillOpacity: 0.1,   // Preenchimento muito leve para não abafar o trânsito
                     interactive: false
                 };
+            },
+            onEachFeature: function(feature, layer) {
+                // 2. ADICIONAR NOMES FLUTUANTES
+                if (feature.properties && (feature.properties.freguesia || feature.properties.name)) {
+                    const name = feature.properties.freguesia || feature.properties.name;
+                    
+                    // Calcula o centro da freguesia
+                    const center = layer.getBounds().getCenter();
+                    
+                    // Cria um ícone de texto sem fundo ou bordas
+                    const labelIcon = L.divIcon({
+                        className: 'freguesia-label',
+                        html: `<span style="
+                            color: rgba(255, 255, 255, 0.5); 
+                            font-family: 'Orbitron', sans-serif; 
+                            font-size: 9px; 
+                            font-weight: 500;
+                            text-transform: uppercase;
+                            white-space: nowrap;
+                            pointer-events: none;
+                            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+                        ">${name}</span>`,
+                        iconSize: [0, 0], // Tamanho zero para o contentor não deslocar o texto
+                        iconAnchor: [30, 0] // Ajuste opcional para centrar melhor
+                    });
+
+                    L.marker(center, { icon: labelIcon, interactive: false }).addTo(map);
+                }
             }
         }).addTo(map);
     } catch (e) {
         console.error("Erro ao carregar freguesias:", e);
     }
 }
+
 
   function addFireStations() {
         const cbs = [
