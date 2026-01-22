@@ -363,26 +363,41 @@ const neonPalette = [
     '#ff00ff'  // Magenta
 ];
 
+// 1. Paleta focada em tons Frios e Púrpuras (evita cores de trânsito)
+const neonPalette = [
+    '#00f2ff', // Cyan Neon
+    '#bc13fe', // Roxo Elétrico
+    '#7df9ff', // Azul Elétrico
+    '#ff00ff', // Magenta
+    '#1e40af', // Azul Royal
+    '#a855f7'  // Violeta
+];
+
 async function addFreguesias() {
     try {
         const response = await fetch('freguesias_leiria.geojson');
         if (!response.ok) return;
         const data = await response.json();
 
-        // Usamos um contador para alternar as cores da paleta de forma saltada
         let colorIndex = 0;
 
         L.geoJSON(data, {
             style: function(feature) {
-                // Seleciona a cor e avança 3 posições na paleta para garantir contraste
-                // O operador % (módulo) faz com que volte ao início da lista
+                // Avança na paleta para evitar cores parecidas em vizinhos
                 const color = neonPalette[colorIndex % neonPalette.length];
-                colorIndex += 3; 
+                colorIndex += 2; 
 
                 return {
-                    stroke: false,      // Remove as linhas de limite
-                    fillColor: color,   // Aplica a cor vibrante
-                    fillOpacity: 0.12,  // Transparência para ver as estradas
+                    // LINHA DE LIMITE (Igual para todas e bem translúcida)
+                    stroke: true,
+                    color: "#ffffff",   // Linha branca/clara para neutralidade
+                    weight: 1,          // Linha fina
+                    opacity: 0.2,       // Muito transparente para não poluir
+
+                    // PREENCHIMENTO (Cores frias saltadas)
+                    fillColor: color,
+                    fillOpacity: 0.12,  // Mantém as estradas bem visíveis
+                    
                     interactive: false
                 };
             }
